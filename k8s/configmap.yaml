@@ -9,7 +9,7 @@ data:
   NODE_ENV: "production"
   PORT: "500"
   # La app habla con el Cloud SQL Auth Proxy que corre como sidecar en el mismo pod
-  PGHOST: "127.0.0.1"
+  PGHOST: "postgres-db"
   PGPORT: "5432"
   PGDATABASE: "poste"
   INSTANCE_CONNECTION_NAME: "TU_CONEXION_CLOUDSQL"
