@@ -1,0 +1,10 @@
+node_modules
+tests
+k8s
+docs
+.git
+.env
+*.json.key
+key.json
+README.md
+docker-compose.dev.yml

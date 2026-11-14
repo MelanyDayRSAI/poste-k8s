@@ -1,0 +1,11 @@
+# Garantiza que, en mantenimientos del clúster, siempre quede al menos un pod disponible.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: poste-mini-muni
+  namespace: mromeros7
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: poste-mini-muni

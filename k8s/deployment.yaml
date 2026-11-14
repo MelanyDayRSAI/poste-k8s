@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: poste-mini-muni
+  namespace: mromeros7
+  labels:
+    app: poste-mini-muni
+spec:
+  replicas: 2                      # dos réplicas: si un pod cae, el otro sigue atendiendo
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0            # actualizaciones sin cortes
+  selector:
+    matchLabels:
+      app: poste-mini-muni
+  template:
+    metadata:
+      labels:
+        app: poste-mini-muni
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          image: mipatito/poste-mini-muni:3.1
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 500
+          envFrom:
+            - configMapRef:
+                name: poste-config
+            - secretRef:
+                name: poste-secrets
+          readinessProbe:          # solo recibe tráfico si la base de datos responde
+            httpGet:
+              path: /api/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:           # reinicia el contenedor si el proceso se cuelga
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+        - name: cloud-sql-proxy    # conexión segura y autenticada a Cloud SQL (patrón sidecar)
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.26.3
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--credentials-file=/secrets/service_account.json"
+            - "$(INSTANCE_CONNECTION_NAME)"
+          env:
+            - name: INSTANCE_CONNECTION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: poste-config
+                  key: INSTANCE_CONNECTION_NAME
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: sa-key
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: sa-key
+          secret:
+            secretName: cloudsql-sa-key

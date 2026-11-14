@@ -1,0 +1,19 @@
+# OPCIONAL: solo si el clúster tiene un Ingress Controller (por ejemplo nginx). Cambia el host.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: poste-mini-muni
+  namespace: mromeros7
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: poste.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: poste-mini-muni
+                port:
+                  name: http

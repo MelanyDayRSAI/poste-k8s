@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: poste-mini-muni
+  labels:
+    app.kubernetes.io/name: poste-mini-muni

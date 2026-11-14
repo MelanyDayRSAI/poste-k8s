@@ -1,0 +1,17 @@
+# ClusterIP: se accede con port-forward o desde un Ingress.
+# Si el clúster no tiene Ingress, cambia a "type: NodePort" (o LoadBalancer si el clúster lo ofrece).
+apiVersion: v1
+kind: Service
+metadata:
+  name: poste-mini-muni
+  namespace: mromeros7
+  labels:
+    app: poste-mini-muni
+spec:
+  type: ClusterIP
+  selector:
+    app: poste-mini-muni
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

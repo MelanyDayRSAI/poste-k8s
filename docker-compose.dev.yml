@@ -1,0 +1,32 @@
+# SOLO PARA DESARROLLO LOCAL: levanta la app con un PostgreSQL en contenedor.
+# En producción la app usa Cloud SQL (ver k8s/ y README.md).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: poste
+      POSTGRES_PASSWORD: poste_dev
+      POSTGRES_DB: poste
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poste -d poste"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  app:
+    build: .
+    ports:
+      - "1000:500"
+    environment:
+      PGHOST: db
+      PGUSER: poste
+      PGPASSWORD: poste_dev
+      PGDATABASE: poste
+      ADMIN_EMAIL: admin@minimuni.local
+      ADMIN_PASSWORD: admin-dev-1234
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  pgdata:
